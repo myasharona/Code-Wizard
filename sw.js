@@ -2,7 +2,7 @@
 // Strategy: cache-first for local assets so the app works offline after first load.
 // Pyodide + Google Fonts are fetched from CDN; we use stale-while-revalidate for those.
 
-const CACHE = 'code-wizard-v2';
+const CACHE = 'code-wizard-v3';
 const LOCAL_ASSETS = [
   './',
   './index.html',

@@ -379,9 +379,9 @@ const SPRITE_IMAGES = {
 // Companion brand color for the background glow — uniform pink across all companions
 // (higher contrast than each companion's own color; reads as a consistent halo).
 const SPRITE_GLOW = {
-  cat: 'rgba(255, 46, 136, .55)',
-  owl: 'rgba(255, 46, 136, .55)',
-  dragon: 'rgba(255, 46, 136, .55)',
+  cat: 'rgba(100, 80, 180, .45)',
+  owl: 'rgba(100, 80, 180, .45)',
+  dragon: 'rgba(100, 80, 180, .45)',
 };
 
 function PixelSprite({ kind = 'owl', size = 96, animate = true, glow = true }) {
