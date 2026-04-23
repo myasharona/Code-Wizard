@@ -5,7 +5,7 @@ A full-screen web app that teaches 7–10 year-olds real Python through 10 magic
 
 **Your kid-facing URL:**
 ```
-(https://github.com/myasharona/Code-Wizard)
+https://github.com/myasharona/Code-Wizard
 ```
 
 Bookmark it on Chromebooks, share in Google Classroom, done.
