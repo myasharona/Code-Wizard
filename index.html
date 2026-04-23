@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Code Wizard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ff2e88" />
+  <meta name="description" content="Learn real Python by casting code spells." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Nunito:wght@400;600;700;800&family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #050114; overflow: hidden; }
+    * { box-sizing: border-box; }
+    :root { --cw-body-font: 'Lexend', system-ui, sans-serif; }
+
+    /* Full viewport stage — letterbox the 900x960 cabinet into whatever screen we get. */
+    #stage {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(ellipse at center, rgba(255,46,136,.15), transparent 70%),
+        #050114;
+    }
+    #cab-wrap {
+      transform-origin: center;
+      will-change: transform;
+    }
+    /* Boot splash while Babel/Pyodide warm up */
+    #boot {
+      position: fixed; inset: 0; z-index: 999;
+      display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+      background: #050114;
+      color: #ffec3d;
+      font-family: 'Press Start 2P', monospace;
+    }
+    #boot img { width: 128px; height: 128px; image-rendering: pixelated; animation: bob 1.5s ease-in-out infinite; }
+    @keyframes bob { 50% { transform: translateY(-10px); } }
+    #boot .t { font-size: 18px; letter-spacing: 3px; text-shadow: 3px 3px 0 #ff2e88, 6px 6px 0 #0a0420; }
+    #boot .s { font-size: 10px; color: #4fff70; letter-spacing: 2px; }
+
+    /* Install prompt bar (shown only when browser offers installation) */
+    #install-bar {
+      position: fixed; left: 12px; bottom: 12px; z-index: 500;
+      background: #0a0420;
+      border: 3px solid #4fff70;
+      box-shadow: 0 0 0 3px #0a0420, 0 6px 24px rgba(0,0,0,.5);
+      padding: 8px 12px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+    }
+    #install-bar.show { display: flex; }
+    #install-bar button {
+      background: #4fff70; color: #0a0420; border: none;
+      padding: 6px 12px; cursor: pointer;
+      font-family: 'Press Start 2P', monospace; font-size: 10px; letter-spacing: 1px;
+    }
+    #install-bar .x {
+      background: transparent; color: #b0a8d0; border: none;
+      cursor: pointer; font-size: 16px; padding: 0 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="boot">
+    <img src="icon-192.png" alt="Code Wizard" />
+    <div class="t">CODE WIZARD</div>
+    <div class="s">Loading your spells…</div>
+  </div>
+
+  <div id="stage">
+    <div id="cab-wrap">
+      <div id="root"></div>
+    </div>
+  </div>
+
+  <div id="install-bar">
+    <span>📱 Install Code Wizard on this Chromebook?</span>
+    <button id="install-btn">INSTALL</button>
+    <button class="x" id="install-close">✕</button>
+  </div>
+
+  <!-- React + Babel (pinned) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- Lesson data + components -->
+  <script src="lessons.js?v=10"></script>
+  <script type="text/babel" src="shared.jsx?v=25"></script>
+  <script type="text/babel" src="arcade-cabinet.jsx?v=23"></script>
+
+  <script type="text/babel">
+    // Kid-facing standalone. Fills viewport, no design canvas, no scroll-quest.
+    function StandaloneApp() {
+      // Pick a default companion — persist kid's last choice
+      const [companion, setCompanion] = React.useState(
+        () => localStorage.getItem('cw.companion') || 'owl'
+      );
+      const [kidName, setKidName] = React.useState(
+        () => localStorage.getItem('cw.name') || ''
+      );
+      // Small selector so kids can swap their companion anytime from the title screen.
+      // It shows ONLY on the title screen; the cabinet itself handles everything else.
+      React.useEffect(() => {
+        localStorage.setItem('cw.companion', companion);
+        localStorage.setItem('cw.name', kidName);
+      }, [companion, kidName]);
+
+      // Fit-to-viewport scaling (900x960 cabinet)
+      React.useEffect(() => {
+        const fit = () => {
+          const wrap = document.getElementById('cab-wrap');
+          if (!wrap) return;
+          const pad = 20;
+          const sx = (window.innerWidth - pad) / 900;
+          const sy = (window.innerHeight - pad) / 960;
+          const s = Math.min(sx, sy, 1.6);
+          wrap.style.transform = `scale(${s})`;
+        };
+        fit();
+        window.addEventListener('resize', fit);
+        // Hide boot splash after first paint of the cabinet
+        const t = setTimeout(() => {
+          const b = document.getElementById('boot');
+          if (b) b.style.display = 'none';
+        }, 300);
+        return () => { window.removeEventListener('resize', fit); clearTimeout(t); };
+      }, []);
+
+      return (
+        <ArcadeCabinet
+          companion={companion}
+          kidName={kidName}
+          onNameChange={setKidName}
+          scanlines={true}
+          onCompanionChange={setCompanion}
+        />
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<StandaloneApp />);
+  </script>
+
+  <script>
+    // Service worker (offline support + installability)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW reg failed', e));
+      });
+    }
+
+    // Install prompt
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const bar = document.getElementById('install-bar');
+      if (!localStorage.getItem('cw.installDismissed')) bar.classList.add('show');
+    });
+    document.getElementById('install-btn').addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('install-bar').classList.remove('show');
+    });
+    document.getElementById('install-close').addEventListener('click', () => {
+      localStorage.setItem('cw.installDismissed', '1');
+      document.getElementById('install-bar').classList.remove('show');
+    });
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('install-bar').classList.remove('show');
+    });
+  </script>
+</body>
+</html>
