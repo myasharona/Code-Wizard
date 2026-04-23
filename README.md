@@ -29,3 +29,8 @@ shared.jsx          ← Pyodide runner, editor, pet window, errors, sprites
 arcade-cabinet.jsx  ← the main UI
 sprites/            ← pixel art for owl, dragon, cat
 icon-*.png          ← PWA icons
+
+
+> **License:** All rights reserved. This is free to use in classrooms
+> at the URL above, but please contact me before copying, modifying,
+> or redistributing. See LICENSE for details.
