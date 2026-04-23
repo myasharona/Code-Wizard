@@ -17,15 +17,6 @@ That's it. Bookmark it on Chromebooks, share in Google Classroom, done.
 3. Click the **install icon** in the address bar (⊕ / ⬇) or Chrome menu → "Install Code Wizard"
 4. Now it appears as an app in the launcher and works offline
 
-## 🏠 Run locally
-
-Pyodide needs a real server (not `file://`). From the project folder:
-
-```
-python3 -m http.server 8000
-```
-
-Then open `http://localhost:8000/`.
 
 ## 📁 Files
 
