@@ -570,6 +570,7 @@ function LevelScreen({ lesson, index, total, companion, kidName, starred, onComp
 
 function VictoryScreen({ kidName, companion, onReplay }) {
   const [now, setNow] = React.useState(() => new Date());
+  const [confetti, setConfetti] = React.useState(true);
   const dateStr = now.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   return (
     <div style={{
@@ -580,7 +581,7 @@ function VictoryScreen({ kidName, companion, onReplay }) {
       overflow: 'auto',
     }}>
       <StarField />
-      <Celebration show={true} onDone={() => {}} />
+      <Celebration show={confetti} noBadge onDone={() => setConfetti(false)} />
       <div style={{ display: 'flex', gap: 14, zIndex: 2 }}>
         {[0,1,2,3,4].map(i => (
           <div key={i} style={{ animation: `pixelFloat 1.5s ease-in-out ${i*0.15}s infinite` }}>

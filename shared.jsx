@@ -985,13 +985,56 @@ function StarBadge({ filled, size = 20 }) {
   );
 }
 
+// ── Celebration sound (chiptune arpeggio via Web Audio API) ────
+function playLevelUpSound() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    // Resume in case it's suspended (autoplay policy)
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    // Classic "you did it!" arpeggio: C5 E5 G5 C6
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const t = now + i * 0.09;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';           // chiptune voice
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.18, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.24);
+    });
+    // Sparkle tail: high C two octaves up, quick shimmer
+    const tailStart = now + notes.length * 0.09 + 0.02;
+    const tailOsc = ctx.createOscillator();
+    const tailGain = ctx.createGain();
+    tailOsc.type = 'triangle';
+    tailOsc.frequency.setValueAtTime(1568, tailStart);         // G6
+    tailOsc.frequency.exponentialRampToValueAtTime(2093, tailStart + 0.35); // C7
+    tailGain.gain.setValueAtTime(0, tailStart);
+    tailGain.gain.linearRampToValueAtTime(0.12, tailStart + 0.02);
+    tailGain.gain.exponentialRampToValueAtTime(0.001, tailStart + 0.5);
+    tailOsc.connect(tailGain).connect(ctx.destination);
+    tailOsc.start(tailStart);
+    tailOsc.stop(tailStart + 0.55);
+    // Auto-close context after sound finishes so we don't leak
+    setTimeout(() => { try { ctx.close(); } catch {} }, 1200);
+  } catch (e) { /* audio is non-critical */ }
+}
+
 // ── Celebration overlay ────────────────────────────────────────
-function Celebration({ show, onDone }) {
+function Celebration({ show, onDone, noBadge, silent }) {
   React.useEffect(() => {
     if (!show) return;
+    if (!silent) playLevelUpSound();
     const t = setTimeout(onDone, 1800);
     return () => clearTimeout(t);
-  }, [show, onDone]);
+  }, [show, onDone, silent]);
   if (!show) return null;
   const bits = Array.from({ length: 24 }, (_, i) => i);
   return (
@@ -1016,7 +1059,7 @@ function Celebration({ show, onDone }) {
           }} />
         );
       })}
-      <div style={{
+      {!noBadge && <div style={{
         position: 'absolute', inset: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         animation: 'popIn .4s ease',
@@ -1034,7 +1077,7 @@ function Celebration({ show, onDone }) {
         }}>
           LEVEL UP!
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
